@@ -7,7 +7,7 @@ class DataExtractorForCsv(DataExtractor):
 
     def extract_data(self,data):
         print('extracting data from csv')
-        # some Extraction code
+        # some Extraction py_code
         # return question_list,answer_list;
         return [], [];
 

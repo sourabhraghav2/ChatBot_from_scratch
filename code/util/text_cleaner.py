@@ -13,6 +13,7 @@ class GenericCleaner(Cleaner):
     def clean_data(self,conversation):
         text_cleaner=TextCleaner()
         cleaned_data=text_cleaner.clean_data(conversation.get_question_answer_list())
+
         conversation.set_question_answer_list(cleaned_data)
         return conversation
 
