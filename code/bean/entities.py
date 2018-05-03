@@ -1,12 +1,14 @@
 from interfaces.interface_hub import Data
 import numpy as np
 
+from util.log_management import LogWrapper
 from util.operations import Discard_sentence_on_length, Sort_sentence_on_length, Remove_multiple_space
 
+log=LogWrapper.get_logger()
 
 class Conversation(Data):
     def __init__(self,data,data_extractor,max_len,min_len):
-        print('initialize Conversation ')
+        log.info('initialize Conversation ')
         self.data=data
         self.question_list=[]
         self.answer_list=[]
@@ -48,11 +50,11 @@ class Conversation(Data):
 
 
     def get_question_answer_list(self,length=None):
-        print('Length : ',length)
+        log.info('Length : '+str(length))
 
         if(length==None):
-            print('Question shape : ',self.shape_of_question_dataset)
-            print('Answer shape   : ', self.shape_of_answer_dataset)
+            log.info('Question shape : '+str(self.shape_of_question_dataset))
+            log.info('Answer shape   : '+str(self.shape_of_answer_dataset))
             return self.question_list[:self.shape_of_question_dataset[0]], self.answer_list[:self.shape_of_answer_dataset[0]]
         else:
             return self.question_list[:length], self.answer_list[:length]
@@ -65,23 +67,23 @@ class Conversation(Data):
     def discard_sentences_on_length(self):
         trim_sentence_on_length=Discard_sentence_on_length(self.sentence_min_length,self.sentence_max_length)
         input=(self.question_list,self.answer_list)
-        print('Before discarding')
-        print('Question  : ',np.array(self.question_list).shape)
-        print('Answer  : ', np.array(self.answer_list).shape)
+        log.info('Before discarding')
+        log.info('Question  : '+str(np.array(self.question_list).shape))
+        log.info('Answer  : '+str(np.array(self.answer_list).shape))
         self.set_question_answer_list(trim_sentence_on_length.operate(input))
 
-        print('After discarding')
-        print('Question  : ', np.array(self.question_list).shape)
-        print('Answer  : ', np.array(self.answer_list).shape)
+        log.info('After discarding')
+        log.info('Question  : '+str(np.array(self.question_list).shape))
+        log.info('Answer  : '+str(np.array(self.answer_list).shape))
 
     def print_conv(self, conversation, from_which):
-        print(from_which)
-        print('---------')
+        log.info(from_which)
+        log.info('---------')
         q_li = conversation.get_question_answer_list()[0]
         a_li = conversation.get_question_answer_list()[1]
-        print(q_li[:3])
-        print(a_li[:3])
-        print('---------')
+        log.info(q_li[:3])
+        log.info(a_li[:3])
+        log.info('---------')
 
     def remove_multiple_space(self):
         space_remover= Remove_multiple_space()
@@ -93,5 +95,5 @@ class Conversation(Data):
 class ConversationList(list):
 
     def __init__(self):
-        print('Conversation initializing')
+        log.info('Conversation initializing')
         self.conv_list = []

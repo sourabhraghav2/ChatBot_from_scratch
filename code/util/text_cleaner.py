@@ -6,9 +6,10 @@ from nltk.stem import SnowballStemmer
 from interfaces.interface_hub import Cleaner, UnitOperation
 from util.operations import *
 
+log=LogWrapper.get_logger()
 class GenericCleaner(Cleaner):
     def __init__(self):
-        print('initialize Generic Cleaner')
+        log.info('initialize Generic Cleaner')
 
     def clean_data(self,conversation):
         text_cleaner=TextCleaner()
@@ -21,7 +22,7 @@ class GenericCleaner(Cleaner):
 
 class TextCleaner(Cleaner):
     def __init__(self):
-        print('initialize Text Cleaner')
+        log.info('initialize Text Cleaner')
 
     def clean_data(self,data):
         self.data = data
@@ -35,9 +36,9 @@ class TextCleaner(Cleaner):
                 self.answer_list = each().operate(self.answer_list)
             except:
                 import traceback
-                print('Exception triggered...!! ',traceback.format_exc())
-        # print("Question : ",self.question_list)
-        # print("Answer   : ",  self.answer_list)
+                log.error('Exception triggered...!! '+str(traceback.format_exc()))
+        # log.info("Question : ",self.question_list)
+        # log.info("Answer   : ",  self.answer_list)
         return self.question_list,self.answer_list
 
 

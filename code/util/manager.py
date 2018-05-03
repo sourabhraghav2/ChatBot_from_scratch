@@ -1,5 +1,6 @@
 from bean.entities import Conversation
 from util.data_extractors import ExtracterQuestionAnswer, DataExtractorForCsv
+from util.log_management import *
 from util.reader_writer import ReadWriteTextFile
 from util.reader_writer import ReadWriteTextFileList
 import numpy as np
@@ -9,7 +10,9 @@ from util. text_processor import Tokkenizer
 
 class Manager:
     def __init__(self,path_list,type):
-        print('manager initialize')
+        self.log=LogWrapper.get_logger()
+        self.log.info('Manager initialization')
+
         sentence_max_length=20
         sentence_min_length = 2
 
@@ -18,12 +21,11 @@ class Manager:
         if type=='txt':
             #read text file
             reader = ReadWriteTextFileList(path_list)
-            group_and_conversation = reader.read(limit=500)
+            group_and_conversation = reader.read(limit=3000)
             conversation = Conversation(group_and_conversation,
                                         ExtracterQuestionAnswer,
                                         sentence_max_length,
-                                        sentence_min_length
-                                        )
+                                        sentence_min_length)
 
         else:
             if type=='csv':
@@ -39,11 +41,13 @@ class Manager:
         cleaner=GenericCleaner()
         conversation=cleaner.clean_data(conversation)
 
-
-        tokken=Tokkenizer(conversation)
+        tokken=Tokkenizer(conversation,threshold=10,sentence_max_length=sentence_max_length)
         conversation=tokken.get_digital_conversation()
         
-        print('Combined_question_answer : ',conversation.get_question_answer_list())
+        self.log.info('Combined_question_answer : '+str(conversation.get_question_answer_list()))
+
+
+
 
 
 

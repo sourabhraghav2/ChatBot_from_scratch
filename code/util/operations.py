@@ -2,8 +2,9 @@ from bs4 import BeautifulSoup
 import  re
 from nltk import WordNetLemmatizer, SnowballStemmer
 from interfaces.interface_hub import UnitOperation
+from util.log_management import LogWrapper
 
-
+log=LogWrapper.get_logger()
 
 class HtmlCleaning(UnitOperation):
     def operate(self, sentence_list):
@@ -11,7 +12,7 @@ class HtmlCleaning(UnitOperation):
         cleaned_html = []
         for each_line in sentence_list:
             cleaned_html.append(BeautifulSoup(each_line).getText())
-        print('Html cleaning done!!')
+        log.info('Html cleaning done!!')
         return cleaned_html
 
 
@@ -53,8 +54,8 @@ class Discard_sentence_on_length(UnitOperation):
         answer=question_answer[1]
         filtered_question_list = []
         filtered_answer_list = []
-        print('max: ',self.max_len)
-        print('min: ', self.min_len)
+        log.info('max: '+str(self.max_len))
+        log.info('min: '+ str(self.min_len))
         for q,a in zip(question,answer):
             if(len(a.split(' '))>self.max_len):
                 a=''.join(a.split(' ')[:self.max_len])
@@ -64,14 +65,14 @@ class Discard_sentence_on_length(UnitOperation):
                 filtered_question_list.append(q)
                 filtered_answer_list.append(a)
             # else:
-            #     print('---------')
-            #     print("Discard question : ",q)
-            #     print("Discard  len : ", len(q.split(' ')))
-            #     print("Discard answer : ", a)
-            #     print("Discard  len : ", len(a.split(' ')))
-            #     print('---------')
+            #     log.info('---------')
+            #     log.info("Discard question : "+str(q))
+            #     log.info("Discard  len : "+str(len(q.split(' '))))
+            #     log.info("Discard answer : "+str(a))
+            #     log.info("Discard  len : "+str(len(a.split(' '))))
+            #     log.info('---------')
 
-        print('Special character removal done!!')
+        log.info('Special character removal done!!')
         return filtered_question_list,filtered_answer_list
 
 
@@ -80,7 +81,7 @@ class SpecialCharacterCleaning(UnitOperation):
         cleaned_special_char=[]
         for each_line in sentence_list:
             cleaned_special_char.append( re.sub("[^a-zA-Z]", " ", each_line))
-        print('Special character removal done!!')
+        log.info('Special character removal done!!')
         return cleaned_special_char
 
 class LowerCaseConversion(UnitOperation):
@@ -89,7 +90,7 @@ class LowerCaseConversion(UnitOperation):
         for each_line in sentence_list:
             lowered_sentence_list.append(each_line.lower())
 
-        print('Word lower case conversion done!!')
+        log.info('Word lower case conversion done!!')
         return  lowered_sentence_list
 
 class Lamatizer(UnitOperation):
@@ -103,7 +104,7 @@ class Lamatizer(UnitOperation):
                 line = line + ' ' + word
             line = re.sub(' +', ' ', line).rstrip().lstrip()
             final_sentence_list.append(line)
-        print('Word lamatized done!!')
+        log.info('Word lamatized done!!')
         return final_sentence_list
 
 class Stemmizer(UnitOperation):
@@ -112,11 +113,35 @@ class Stemmizer(UnitOperation):
         snowball_stemmer = SnowballStemmer('english')
         for each_line in sentence_list:
             line = ''
+            each_line=self.custom_word_alternative(each_line)
             for word in each_line.split(' '):
                 word = snowball_stemmer.stem(word)
                 line = line + ' ' + word
             sentence_list.append(line)
-        print('Word Stemmization done!!')
+        log.info('Word Stemmization done!!')
         return  sentence_list
+
+    def custom_word_alternative(self,text):
+        text = re.sub(r"i'm", "i am", text)
+        text = re.sub(r"he's", "he is", text)
+        text = re.sub(r"she's", "she is", text)
+        text = re.sub(r"it's", "it is", text)
+        text = re.sub(r"that's", "that is", text)
+        text = re.sub(r"what's", "that is", text)
+        text = re.sub(r"where's", "where is", text)
+        text = re.sub(r"how's", "how is", text)
+        text = re.sub(r"\'ll", " will", text)
+        text = re.sub(r"\'ve", " have", text)
+        text = re.sub(r"\'re", " are", text)
+        text = re.sub(r"\'d", " would", text)
+        text = re.sub(r"\'re", " are", text)
+        text = re.sub(r"won't", "will not", text)
+        text = re.sub(r"can't", "cannot", text)
+        text = re.sub(r"n't", " not", text)
+        text = re.sub(r"n'", "ng", text)
+        text = re.sub(r"'bout", "about", text)
+        text = re.sub(r"'til", "until", text)
+        text = re.sub(r"[-()\"#/@;:<>{}`+=~|.!?,]", "", text)
+        return text
 
 
