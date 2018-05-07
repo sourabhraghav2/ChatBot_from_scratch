@@ -3,6 +3,7 @@ from util.data_extractors import ExtracterQuestionAnswer, DataExtractorForCsv
 from util.log_management import *
 from util.reader_writer import ReadWriteTextFile
 from util.reader_writer import ReadWriteTextFileList
+from property_manager.property_handler import Properties
 import numpy as np
 
 from util.text_cleaner import TextCleaner, GenericCleaner
@@ -11,10 +12,11 @@ from util. text_processor import Tokkenizer
 class Manager:
     def __init__(self,path_list,type):
         self.log=LogWrapper.get_logger()
+        self.properties=Properties.get_properties()
         self.log.info('Manager initialization')
 
-        sentence_max_length=20
-        sentence_min_length = 2
+        sentence_max_length=int(self.properties['sentence_max_length'])
+        sentence_min_length = int(self.properties['sentence_min_length'])
 
         conversation=None
         #read Data
@@ -41,8 +43,8 @@ class Manager:
         cleaner=GenericCleaner()
         conversation=cleaner.clean_data(conversation)
 
-        tokken=Tokkenizer(conversation,threshold=10,sentence_max_length=sentence_max_length)
-        conversation=tokken.get_digital_conversation()
+        tokkenizer=Tokkenizer(conversation,threshold=10,sentence_max_length=sentence_max_length)
+        conversation=tokkenizer.get_digital_conversation()
         
         self.log.info('Combined_question_answer : '+str(conversation.get_question_answer_list()))
 

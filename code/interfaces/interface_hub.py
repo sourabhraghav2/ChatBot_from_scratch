@@ -18,3 +18,8 @@ class Data:
 class DataExtractor:
     def extract_data(self): pass
 
+
+class NN:
+    def train_model(self,  conversation):pass
+    def load_and_predict(self, X_test,  batch_size):pass
+
