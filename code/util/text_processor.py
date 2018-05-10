@@ -15,7 +15,7 @@ class Tokkenizer:
         question_list=conversation.get_question_list()
         answer_list=conversation.get_answer_list()
         self.sntence_list=list(np.concatenate([question_list,answer_list]))
-        self.vocab = {each :index for index, each in enumerate(['<PAD>', '<EOS>', '<UNK>', '<GO>'])}
+        self.vocab_with_int = {each :index for index, each in enumerate(['<PAD>', '<EOS>', '<UNK>', '<GO>'])}
         self.generate_vocab()
 
         #convert words to digit
@@ -23,16 +23,19 @@ class Tokkenizer:
         answer_list= self.convert_word_to_digit(answer_list)
 
         #padding if required
-        answer_list = self.padd_list_with_size_and_digit(answer_list,self.vocab['<PAD>'],sentence_max_length)
-        question_list = self.padd_list_with_size_and_digit(question_list,self.vocab['<PAD>'],sentence_max_length)
+        answer_list = self.padd_list_with_size_and_digit(answer_list, self.vocab_with_int['<PAD>'], sentence_max_length)
+        question_list = self.padd_list_with_size_and_digit(question_list, self.vocab_with_int['<PAD>'], sentence_max_length)
 
         conversation.set_question_answer_list((question_list,answer_list))
 
-    def get_vocab(self):
-        return self.vocab
+    def get_vocab_to_int(self):
+        return self.vocab_with_int
 
     def get_digital_conversation(self):
         return self.conversation
+
+    def get_vocab_length(self):
+        return self.vocab_length
 
     def padd_list_with_size_and_digit(self,input_list, padding_digit, max_size):
         final_padded_digit_list = []
@@ -47,10 +50,14 @@ class Tokkenizer:
 
         return final_padded_digit_list
 
+
+    def get_vocab_with_count(self):
+        return self.vocab_with_int
+    
     def generate_vocab(self):
 
-        vocab=self.vocab
-        count=self.vocab.__len__()
+        vocab=self.vocab_with_int
+        count=self.vocab_with_int.__len__()
         log.info("Count starts : "+str(count))
         vocab_with_count={}
         for sentence in self.sntence_list:
@@ -65,13 +72,14 @@ class Tokkenizer:
                 log.info('del '+str(k)+' : '+str(v))
                 vocab_with_count[k] = 0
 
-
+        self.vocab_length=len(vocab_with_count)
+        self.vocab_with_int=vocab_with_count
         for sentence in self.sntence_list:
             for word in sentence.split(' '):
                 if word not  in vocab and word !='' and vocab_with_count[word]!=0:
                     count=count+1;
                     vocab[word]=count
-        self.vocab=vocab
+        self.vocab_with_int=vocab
         return vocab
 
 
@@ -81,10 +89,10 @@ class Tokkenizer:
             digit_sentence=[]
             log.info("words sentence  : >"+str(sentence)+"<")
             for word in sentence.split(' '):
-                if self.vocab.get(word):
-                    digit_sentence.append(self.vocab.get(word))
+                if self.vocab_with_int.get(word):
+                    digit_sentence.append(self.vocab_with_int.get(word))
                 else:
-                    digit_sentence.append(self.vocab.get('<UNK>'))
+                    digit_sentence.append(self.vocab_with_int.get('<UNK>'))
             log.info('digital  sentence : '+str(digit_sentence))
             digit_sentence_list.append(digit_sentence)
 
@@ -94,7 +102,7 @@ class Tokkenizer:
 
 
     def print_my_data(self):
-        log.info('Vocab :'+str(self.vocab))
+        log.info('Vocab :' + str(self.vocab_with_int))
         log.info('Sentence: '+str(self.sntence_list[1]))
         log.info('Digit List :'+str(self.digit_sentence_list[1]))
 

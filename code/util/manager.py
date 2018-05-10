@@ -1,4 +1,5 @@
 from bean.entities import Conversation
+from model.lstm import LSTM_with_attention
 from util.data_extractors import ExtracterQuestionAnswer, DataExtractorForCsv
 from util.log_management import *
 from util.reader_writer import ReadWriteTextFile
@@ -18,12 +19,13 @@ class Manager:
         sentence_max_length=int(self.properties['sentence_max_length'])
         sentence_min_length = int(self.properties['sentence_min_length'])
 
+
         conversation=None
         #read Data
         if type=='txt':
             #read text file
             reader = ReadWriteTextFileList(path_list)
-            group_and_conversation = reader.read(limit=3000)
+            group_and_conversation = reader.read(limit=int(self.properties['limit_of_data_to_read']))
             conversation = Conversation(group_and_conversation,
                                         ExtracterQuestionAnswer,
                                         sentence_max_length,
@@ -43,10 +45,15 @@ class Manager:
         cleaner=GenericCleaner()
         conversation=cleaner.clean_data(conversation)
 
-        tokkenizer=Tokkenizer(conversation,threshold=10,sentence_max_length=sentence_max_length)
+        tokkenizer=Tokkenizer(conversation,
+                              threshold=int(self.properties['vocab_threshold']),
+                              sentence_max_length=sentence_max_length)
         conversation=tokkenizer.get_digital_conversation()
-        
+        vocab_to_int=tokkenizer.get_vocab_to_int()
+        self.log.info('vocab : '+str(vocab_to_int))
         self.log.info('Combined_question_answer : '+str(conversation.get_question_answer_list()))
+
+        model=LSTM_with_attention(self.properties,vocab_to_int)
 
 
 

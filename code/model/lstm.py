@@ -1,10 +1,19 @@
 from model.parent_model import BasicModel
 import tensorflow as tf
 
+from util.log_management import LogWrapper
+
+
 class LSTM_with_attention(BasicModel):
-    def __init__(self):
+    def __init__(self,properties,vocab_with_int):
         super(LSTM_with_attention, self).__init__()
+        self.log = LogWrapper.get_logger()
+        self.log.info('initializing LSTM_with_attention')
+        self.properties=properties
+        self.vocab_length=len(vocab_with_int)
+        self.vocab_with_int=vocab_with_int
         self.build_me()
+
 
     def build_me(self):
         # Reset the graph to ensure that it is ready for training
@@ -15,15 +24,24 @@ class LSTM_with_attention(BasicModel):
         # Load the model inputs
         input_data, targets, lr, keep_prob = self.model_inputs()
         # Sequence length will be the max line length for each batch
-        sequence_length = tf.placeholder_with_default(max_line_length, None, name='sequence_length')
+        sequence_length = tf.placeholder_with_default(int(self.properties['sentence_max_length']), None, name='sequence_length')
         # Find the shape of the input data for sequence_loss
         input_shape = tf.shape(input_data)
 
         # Create the training and inference logits
         train_logits, inference_logits = self.seq2seq_model(
-            tf.reverse(input_data, [-1]), targets, keep_prob, batch_size, sequence_length, len(answers_vocab_to_int),
-            len(questions_vocab_to_int), encoding_embedding_size, decoding_embedding_size, rnn_size, num_layers,
-            questions_vocab_to_int)
+                                            tf.reverse(input_data, [-1]),
+                                            targets,
+                                            keep_prob,
+                                            int(self.properties['batch_size']),
+                                            sequence_length,
+                                            self.vocab_length,
+                                            self.vocab_length,
+                                            int(self.properties['encoding_embedding_size']),
+                                            int(self.properties['decoding_embedding_size']),
+                                            int(self.properties['rnn_size']),
+                                            int(self.properties['num_layers']),
+                                            self.vocab_with_int)
 
         # Create a tensor for the inference logits, needed if loading a checkpoint version of the model
         tf.identity(inference_logits, 'logits')
@@ -33,7 +51,7 @@ class LSTM_with_attention(BasicModel):
             cost = tf.contrib.seq2seq.sequence_loss(train_logits, targets, tf.ones([input_shape[0], sequence_length]))
 
             # Optimizer
-            optimizer = tf.train.AdamOptimizer(learning_rate)
+            optimizer = tf.train.AdamOptimizer(float(self.properties['learning_rate']))
 
             # Gradient Clipping
             gradients = optimizer.compute_gradients(cost)
