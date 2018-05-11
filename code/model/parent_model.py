@@ -13,5 +13,6 @@ class BasicModel(NN):
         #training model
         self.log.info('Training model')
 
+
     def load_and_predict(self, X_test, batch_size):
         self.log.info('Loading data and predicting')

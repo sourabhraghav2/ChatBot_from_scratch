@@ -13,6 +13,8 @@ class LSTM_with_attention(BasicModel):
         self.vocab_length=len(vocab_with_int)
         self.vocab_with_int=vocab_with_int
         self.build_me()
+        self.log.info('LSTM_with_attention model is build successfully')
+
 
 
     def build_me(self):
@@ -57,6 +59,7 @@ class LSTM_with_attention(BasicModel):
             gradients = optimizer.compute_gradients(cost)
             capped_gradients = [(tf.clip_by_value(grad, -5., 5.), var) for grad, var in gradients if grad is not None]
             train_op = optimizer.apply_gradients(capped_gradients)
+            self.train_op=train_op
 
 
     def model_inputs(self):
