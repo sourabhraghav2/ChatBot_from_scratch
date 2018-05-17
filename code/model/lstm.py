@@ -25,16 +25,23 @@ class LSTM_with_attention(BasicModel):
 
         # Load the model inputs
         input_data, targets, lr, keep_prob = self.model_inputs()
+        self.input_data=input_data
+        self.targets=targets
+        self.lr=lr
+        self.keep_prob=keep_prob
+
+
+
         # Sequence length will be the max line length for each batch
         sequence_length = tf.placeholder_with_default(int(self.properties['sentence_max_length']), None, name='sequence_length')
         # Find the shape of the input data for sequence_loss
-        input_shape = tf.shape(input_data)
+        input_shape = tf.shape(self.input_data)
 
         # Create the training and inference logits
         train_logits, inference_logits = self.seq2seq_model(
-                                            tf.reverse(input_data, [-1]),
-                                            targets,
-                                            keep_prob,
+                                            tf.reverse(self.input_data, [-1]),
+                                            self.targets,
+                                            self.keep_prob,
                                             int(self.properties['batch_size']),
                                             sequence_length,
                                             self.vocab_length,
@@ -50,7 +57,7 @@ class LSTM_with_attention(BasicModel):
 
         with tf.name_scope("optimization"):
             # Loss function
-            cost = tf.contrib.seq2seq.sequence_loss(train_logits, targets, tf.ones([input_shape[0], sequence_length]))
+            cost = tf.contrib.seq2seq.sequence_loss(train_logits, self.targets, tf.ones([input_shape[0], sequence_length]))
 
             # Optimizer
             optimizer = tf.train.AdamOptimizer(float(self.properties['learning_rate']))

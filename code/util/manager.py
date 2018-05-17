@@ -54,7 +54,7 @@ class Manager:
         self.log.info('Combined_question_answer : '+str(conversation.get_question_answer_list()))
 
         model=LSTM_with_attention(self.properties,vocab_to_int)
-        model.train_model()
+        model.train_model(conversation,self.properties)
 
 
 
