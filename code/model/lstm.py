@@ -20,20 +20,17 @@ class LSTM_with_attention(BasicModel):
     def build_me(self):
         # Reset the graph to ensure that it is ready for training
         tf.reset_default_graph()
-        # Start the session
+        # Start the sessioncost
         sess = tf.InteractiveSession()
 
         # Load the model inputs
         input_data, targets, lr, keep_prob = self.model_inputs()
-        self.input_data=input_data
-        self.targets=targets
-        self.lr=lr
-        self.keep_prob=keep_prob
+
 
 
 
         # Sequence length will be the max line length for each batch
-        sequence_length = tf.placeholder_with_default(int(self.properties['sentence_max_length']), None, name='sequence_length')
+        self.sequence_length = tf.placeholder_with_default(int(self.properties['sentence_max_length']), None, name='sequence_length')
         # Find the shape of the input data for sequence_loss
         input_shape = tf.shape(self.input_data)
 
@@ -43,7 +40,7 @@ class LSTM_with_attention(BasicModel):
                                             self.targets,
                                             self.keep_prob,
                                             int(self.properties['batch_size']),
-                                            sequence_length,
+                                            self.sequence_length,
                                             self.vocab_length,
                                             self.vocab_length,
                                             int(self.properties['encoding_embedding_size']),
@@ -57,13 +54,13 @@ class LSTM_with_attention(BasicModel):
 
         with tf.name_scope("optimization"):
             # Loss function
-            cost = tf.contrib.seq2seq.sequence_loss(train_logits, self.targets, tf.ones([input_shape[0], sequence_length]))
+            self.cost = tf.contrib.seq2seq.sequence_loss(train_logits, self.targets, tf.ones([input_shape[0], self.sequence_length]))
 
             # Optimizer
             optimizer = tf.train.AdamOptimizer(float(self.properties['learning_rate']))
 
             # Gradient Clipping
-            gradients = optimizer.compute_gradients(cost)
+            gradients = optimizer.compute_gradients(self.cost)
             capped_gradients = [(tf.clip_by_value(grad, -5., 5.), var) for grad, var in gradients if grad is not None]
             train_op = optimizer.apply_gradients(capped_gradients)
             self.train_op=train_op
@@ -71,12 +68,12 @@ class LSTM_with_attention(BasicModel):
 
     def model_inputs(self):
         '''Create palceholders for inputs to the model'''
-        input_data = tf.placeholder(tf.int32, [None, None], name='input')
-        targets = tf.placeholder(tf.int32, [None, None], name='targets')
-        lr = tf.placeholder(tf.float32, name='learning_rate')
-        keep_prob = tf.placeholder(tf.float32, name='keep_prob')
+        self.input_data = tf.placeholder(tf.int32, [None, None], name='input')
+        self.targets = tf.placeholder(tf.int32, [None, None], name='targets')
+        self.lr = tf.placeholder(tf.float32, name='learning_rate')
+        self.keep_prob = tf.placeholder(tf.float32, name='keep_prob')
 
-        return input_data, targets, lr, keep_prob
+        return self.input_data, self.targets, self.lr, self.keep_prob
 
     def process_decoding_input(self,target_data, vocab_to_int, batch_size):
         '''Remove the last word id from each batch and concat the <GO> to the begining of each batch'''
