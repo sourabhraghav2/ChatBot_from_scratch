@@ -1,11 +1,13 @@
 from interfaces.interface_hub import NN
 from util.log_management import LogWrapper
 import tensorflow as tf
-
+import numpy as np
+import tensorflow as tf
+import time
 
 class BasicModel(NN):
     def __init__(self):
-        super(BasicModel, self).__init__()
+        super().__init__()
         self.log = LogWrapper.get_logger()
         self.log.info('BasicModel initialization')
 
@@ -35,17 +37,14 @@ class BasicModel(NN):
         summary_valid_loss = []  # Record the validation loss for saving improvements in the model
 
         checkpoint = "best_model.ckpt"
-
+        sess = tf.InteractiveSession()
         sess.run(tf.global_variables_initializer())
 
-        for epoch_i in range(1, epochs + 1):
-            for batch_i, (questions_batch, answers_batch) in enumerate(
-                    batch_data(train_questions, train_answers, batch_size)):
+        for epoch_i in range(1, int(properties['epochs']) + 1):
+            for batch_i, (questions_batch, answers_batch) in enumerate(self.batch_data(train_questions, train_answers, int(properties['batch_size']))):
                 start_time = time.time()
-                _, loss = sess.run([train_op, cost],
-                                   {input_data: questions_batch, targets: answers_batch, lr: learning_rate,
-                                    sequence_length: answers_batch.shape[1],
-                                    keep_prob: keep_probability})
+                _, loss = sess.run([self.train_op, self.cost],
+                                   {self.input_data: questions_batch, self.targets: answers_batch, self.lr: float(properties['min_learning_rate']),self.sequence_length: answers_batch.shape[1],self.keep_prob: float(properties['keep_probability'])})
 
                 total_train_loss += loss
                 end_time = time.time()
@@ -54,9 +53,9 @@ class BasicModel(NN):
                 if batch_i % display_step == 0:
                     print('Epoch {:>3}/{} Batch {:>4}/{} - Loss: {:>6.3f}, Seconds: {:>4.2f}'
                           .format(epoch_i,
-                                  epochs,
+                                  int(properties['epochs']),
                                   batch_i,
-                                  len(train_questions) // batch_size,
+                                  len(train_questions) // int(properties['batch_size']),
                                   total_train_loss / display_step,
                                   batch_time * display_step))
                     total_train_loss = 0
@@ -65,23 +64,23 @@ class BasicModel(NN):
                     total_valid_loss = 0
                     start_time = time.time()
                     for batch_ii, (questions_batch, answers_batch) in \
-                            enumerate(batch_data(valid_questions, valid_answers, batch_size)):
+                            enumerate(self.batch_data(valid_questions, valid_answers, int(properties['batch_size']))):
                         valid_loss = sess.run(
-                            cost, {input_data: questions_batch,
-                                   targets: answers_batch,
-                                   lr: learning_rate,
-                                   sequence_length: answers_batch.shape[1],
-                                   keep_prob: 1})
+                            self.cost, {self.input_data: questions_batch,
+                                   self.targets: answers_batch,
+                                   self.lr: float(properties['min_learning_rate']),
+                                   self.sequence_length: answers_batch.shape[1],
+                                   self.keep_prob: 1})
                         total_valid_loss += valid_loss
                     end_time = time.time()
                     batch_time = end_time - start_time
-                    avg_valid_loss = total_valid_loss / (len(valid_questions) / batch_size)
+                    avg_valid_loss = total_valid_loss / (len(valid_questions) / int(properties['batch_size']))
                     print('Valid Loss: {:>6.3f}, Seconds: {:>5.2f}'.format(avg_valid_loss, batch_time))
 
                     # Reduce learning rate, but not below its minimum value
-                    learning_rate *= learning_rate_decay
-                    if learning_rate < min_learning_rate:
-                        learning_rate = min_learning_rate
+                    learning_rate *= float(properties['learning_rate_decay'])
+                    if learning_rate < float(properties['min_learning_rate']):
+                        learning_rate = float(properties['min_learning_rate'])
 
                     summary_valid_loss.append(avg_valid_loss)
                     if avg_valid_loss <= min(summary_valid_loss):
@@ -100,19 +99,19 @@ class BasicModel(NN):
                 print("Stopping Training.")
                 break
 
-    def pad_sentence_batch(sentence_batch, vocab_to_int):
+    def pad_sentence_batch(self,sentence_batch, vocab_to_int):
         """Pad sentences with <PAD> so that each sentence of a batch has the same length"""
         max_sentence = max([len(sentence) for sentence in sentence_batch])
         return [sentence + [vocab_to_int['<PAD>']] * (max_sentence - len(sentence)) for sentence in sentence_batch]
 
-    def batch_data(questions, answers, batch_size):
+    def batch_data(self, questions, answers, batch_size):
         """Batch questions and answers together"""
         for batch_i in range(0, len(questions) // batch_size):
             start_i = batch_i * batch_size
             questions_batch = questions[start_i:start_i + batch_size]
             answers_batch = answers[start_i:start_i + batch_size]
-            pad_questions_batch = np.array(pad_sentence_batch(questions_batch, questions_vocab_to_int))
-            pad_answers_batch = np.array(pad_sentence_batch(answers_batch, answers_vocab_to_int))
+            pad_questions_batch = np.array(self.pad_sentence_batch(questions_batch, self.vocab_with_int))
+            pad_answers_batch = np.array(self.pad_sentence_batch(answers_batch, self.vocab_with_int))
             yield pad_questions_batch, pad_answers_batch
 
 
