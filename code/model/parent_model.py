@@ -36,7 +36,7 @@ class BasicModel(NN):
         total_train_loss = 0  # Record the training loss for each display step
         summary_valid_loss = []  # Record the validation loss for saving improvements in the model
 
-        checkpoint = "best_model.ckpt"
+
         sess = tf.InteractiveSession()
         sess.run(tf.global_variables_initializer())
 
@@ -78,16 +78,19 @@ class BasicModel(NN):
                     print('Valid Loss: {:>6.3f}, Seconds: {:>5.2f}'.format(avg_valid_loss, batch_time))
 
                     # Reduce learning rate, but not below its minimum value
+                    learning_rate = float(properties['min_learning_rate'])
                     learning_rate *= float(properties['learning_rate_decay'])
-                    if learning_rate < float(properties['min_learning_rate']):
-                        learning_rate = float(properties['min_learning_rate'])
+                    # if learning_rate < float(properties['min_learning_rate']):
+                    #     learning_rate = float(properties['min_learning_rate'])
 
                     summary_valid_loss.append(avg_valid_loss)
                     if avg_valid_loss <= min(summary_valid_loss):
                         print('New Record!')
                         stop_early = 0
                         saver = tf.train.Saver()
-                        saver.save(sess, checkpoint)
+                        path = properties['checkpoint']
+                        print("checkpoint : ",path)
+                        saver.save(sess, path)
 
                     else:
                         print("No Improvement.")

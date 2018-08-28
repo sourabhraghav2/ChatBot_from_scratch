@@ -57,7 +57,7 @@ class Tokkenizer:
     def generate_vocab(self):
 
         vocab=self.vocab_with_int
-        count=self.vocab_with_int.__len__()
+        count=self.vocab_with_int.__len__()-1
         log.info("Count starts : "+str(count))
         vocab_with_count={}
         for sentence in self.sntence_list:
