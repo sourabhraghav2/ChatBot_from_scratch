@@ -35,53 +35,64 @@ class BasicModel(NN):
         validation_check = ((len(train_questions)) // int(properties['batch_size']) // 2) - 1  # Modulus for checking validation loss
         total_train_loss = 0  # Record the training loss for each display step
         summary_valid_loss = []  # Record the validation loss for saving improvements in the model
-
+        learning_rate=float(properties['learning_rate'])
+        min_learning_rate=float(properties['min_learning_rate'])
+        learning_rate_decay= float(properties['learning_rate_decay'])
+        batch_size=int(properties['batch_size'])
+        epochs=int(properties['epochs'])
+        keep_probability=float(properties['keep_probability'])
 
         sess = tf.InteractiveSession()
         sess.run(tf.global_variables_initializer())
 
-        for epoch_i in range(1, int(properties['epochs']) + 1):
-            for batch_i, (questions_batch, answers_batch) in enumerate(self.batch_data(train_questions, train_answers, int(properties['batch_size']))):
+        for epoch_i in range(1, epochs + 1):
+            for batch_i, (questions_batch, answers_batch) in enumerate(self.batch_data(train_questions, train_answers, batch_size)):
                 start_time = time.time()
                 _, loss = sess.run([self.train_op, self.cost],
-                                   {self.input_data: questions_batch, self.targets: answers_batch, self.lr: float(properties['min_learning_rate']),self.sequence_length: answers_batch.shape[1],self.keep_prob: float(properties['keep_probability'])})
+                                   {self.input_data: questions_batch,
+                                    self.targets: answers_batch,
+                                    self.lr: learning_rate,
+                                    self.sequence_length: answers_batch.shape[1],
+                                    self.keep_prob: keep_probability})
 
                 total_train_loss += loss
                 end_time = time.time()
                 batch_time = end_time - start_time
 
                 if batch_i % display_step == 0:
-                    print('Epoch {:>3}/{} Batch {:>4}/{} - Loss: {:>6.3f}, Seconds: {:>4.2f}'
-                          .format(epoch_i,
-                                  int(properties['epochs']),
-                                  batch_i,
-                                  len(train_questions) // int(properties['batch_size']),
-                                  total_train_loss / display_step,
-                                  batch_time * display_step))
+                    print('Epoch {:>3}/{} Batch {:>4}/{} - Loss: {:>6.3f}, Seconds: {:>4.2f}'.format(
+                        epoch_i,
+                        epochs,
+                        batch_i,
+                        len(train_questions) // batch_size,
+                        total_train_loss / display_step,
+                        batch_time * display_step))
                     total_train_loss = 0
 
                 if batch_i % validation_check == 0 and batch_i > 0:
                     total_valid_loss = 0
                     start_time = time.time()
-                    for batch_ii, (questions_batch, answers_batch) in \
-                            enumerate(self.batch_data(valid_questions, valid_answers, int(properties['batch_size']))):
+
+                    batched=self.batch_data(valid_questions, valid_answers, batch_size)
+
+                    for batch_ii, (questions_batch, answers_batch) in enumerate(batched):
                         valid_loss = sess.run(
                             self.cost, {self.input_data: questions_batch,
                                    self.targets: answers_batch,
-                                   self.lr: float(properties['min_learning_rate']),
+                                   self.lr: learning_rate,
                                    self.sequence_length: answers_batch.shape[1],
-                                   self.keep_prob: 1})
+                                   self.keep_prob: keep_probability})
                         total_valid_loss += valid_loss
                     end_time = time.time()
                     batch_time = end_time - start_time
-                    avg_valid_loss = total_valid_loss / (len(valid_questions) / int(properties['batch_size']))
+                    avg_valid_loss = total_valid_loss / (len(valid_questions) / batch_size)
                     print('Valid Loss: {:>6.3f}, Seconds: {:>5.2f}'.format(avg_valid_loss, batch_time))
 
                     # Reduce learning rate, but not below its minimum value
-                    learning_rate = float(properties['min_learning_rate'])
-                    learning_rate *= float(properties['learning_rate_decay'])
-                    # if learning_rate < float(properties['min_learning_rate']):
-                    #     learning_rate = float(properties['min_learning_rate'])
+
+                    learning_rate *= learning_rate_decay
+                    if learning_rate < min_learning_rate:
+                        learning_rate = min_learning_rate
 
                     summary_valid_loss.append(avg_valid_loss)
                     if avg_valid_loss <= min(summary_valid_loss):
