@@ -25,7 +25,8 @@ class Manager:
         if type=='txt':
             #read text file
             reader = ReadWriteTextFileList(path_list)
-            group_and_conversation = reader.read(limit=int(self.properties['limit_of_data_to_read']))
+            # group_and_conversation = reader.read(limit=int(self.properties['limit_of_data_to_read']))
+            group_and_conversation = reader.read()
             conversation = Conversation(group_and_conversation,
                                         ExtracterQuestionAnswer,
                                         sentence_max_length,
